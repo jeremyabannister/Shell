@@ -37,9 +37,12 @@ private extension Shell.StaggaredCommandExecuter {
     }
     isExecuting = true
     commandsAndStaggarDurations.remove(at: 0)
-    DispatchQueue.main.asyncAfter(deadline: .now() + next.staggarDuration) {
+    let semaphore = DispatchSemaphore(value: 0)
+    DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + next.staggarDuration) {
       Shell.execute(next.command)
       self.executeNext()
+      semaphore.signal()
     }
+    semaphore.wait()
   }
 }
